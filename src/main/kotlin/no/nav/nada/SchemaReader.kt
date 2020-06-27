@@ -1,11 +1,13 @@
 package no.nav.nada
 
-import io.micrometer.core.instrument.Counter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.apache.kafka.clients.consumer.ConsumerRecord
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.json.JsonObject
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.errors.RetriableException
 import org.slf4j.LoggerFactory
@@ -19,7 +21,7 @@ object SchemaReader : CoroutineScope {
     lateinit var job: Job
     lateinit var kafkaProps: Properties
     lateinit var schemaRepo: SchemaRepository
-
+    val json = Json(JsonConfiguration.Default.copy(ignoreUnknownKeys = true))
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO + job
 
@@ -38,19 +40,24 @@ object SchemaReader : CoroutineScope {
         this.schemaRepo = schemaRepo
     }
 
-    fun run () {
+    fun run() {
         launch {
             logger.info("Starter kafka consumer")
             KafkaConsumer<String, String>(kafkaProps).use { consumer ->
-                consumer.subscribe(listOf("__schemas"))
-                while(job.isActive) {
+                consumer.subscribe(listOf("_schemas"))
+                while (job.isActive) {
                     try {
                         val records = consumer.poll(Duration.of(100, ChronoUnit.MILLIS))
-                        records.asSequence().forEach {
-                            schemaRepo.saveSchema(it)
-                        }
+                        records.asSequence()
+                                .filter { it.key() != null && it.value() != null }
+                                .forEach { r ->
+                                    val key =     json.parse(SchemaRegistryKey.serializer(), r.key())
+                                    val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
+                                    schemaRepo.saveSchema(key, message, r.timestamp())
+                                }
+                        consumer.commitSync(Duration.ofSeconds(2))
                     } catch (e: RetriableException) {
-                        logger.warn("Something went wrong while polling __schema", e)
+                        logger.warn("Something went wrong while polling _schemas", e)
                     }
                 }
             }
@@ -58,3 +65,9 @@ object SchemaReader : CoroutineScope {
     }
 
 }
+
+@Serializable
+data class SchemaRegistryMessage(val subject: String, val version: Long, val id: Long, val schema: String, val deleted: Boolean)
+
+@Serializable
+data class SchemaRegistryKey(val subject: String, val version: Long, val magic: Long, val keytype: String)

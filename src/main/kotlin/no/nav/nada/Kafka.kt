@@ -15,8 +15,8 @@ fun kafkaConfigFrom(config: ApplicationConfig, serviceUser: ServiceUser? = null)
         put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer::class.java)
         put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer::class.java)
         put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-        put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
-        put(ConsumerConfig.GROUP_ID_CONFIG, "nada-schema-backup")
+        put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
+        put(ConsumerConfig.GROUP_ID_CONFIG, "nada-schema-backup-1")
         if (serviceUser != null) {
             putAll(credentials(config, serviceUser))
         }

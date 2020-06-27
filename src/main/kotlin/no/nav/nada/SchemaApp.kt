@@ -28,6 +28,8 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.common.TextFormat
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
 import org.flywaydb.core.Flyway
 import org.slf4j.event.Level
 import java.nio.file.Files
@@ -53,7 +55,10 @@ fun Application.schemaApi(
     }
     install(DefaultHeaders)
     install(ContentNegotiation) {
-        serialization(contentType = ContentType.Application.Json)
+        serialization(
+                contentType = ContentType.Application.Json,
+                json = Json(JsonConfiguration.Default)
+        )
     }
     install(MicrometerMetrics) {
         registry = PrometheusMeterRegistry(

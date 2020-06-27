@@ -15,12 +15,12 @@ val hikariVersion = "3.4.2"
 val kafkaVersion = "2.5.0"
 val junitJupiterVersion = "5.6.1"
 val kotliqueryVersion = "1.3.0"
-val ktorVersion = "1.3.1"
+val ktorVersion = "1.3.2"
 val log4jVersion = "2.13.1"
 val micrometerVersion = "1.5.2"
 val postgresVersion = "42.2.14"
 val prometheusVersion = "0.9.0"
-val serializerVersion = "0.14.0"
+val serializerVersion = "0.20.0"
 val slf4jVersion = "1.7.30"
 val vaultJdbcVersion = "1.3.1"
 
@@ -29,6 +29,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializerVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serializerVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-auth:$ktorVersion")
