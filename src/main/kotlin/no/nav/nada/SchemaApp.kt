@@ -55,10 +55,8 @@ fun Application.schemaApi(
     }
     install(DefaultHeaders)
     install(ContentNegotiation) {
-        serialization(
-                contentType = ContentType.Application.Json,
-                json = Json(JsonConfiguration.Default)
-        )
+        json(json = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true)),
+                contentType = ContentType.Application.Json)
     }
     install(MicrometerMetrics) {
         registry = PrometheusMeterRegistry(

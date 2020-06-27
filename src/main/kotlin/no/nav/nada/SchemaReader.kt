@@ -21,7 +21,7 @@ object SchemaReader : CoroutineScope {
     lateinit var job: Job
     lateinit var kafkaProps: Properties
     lateinit var schemaRepo: SchemaRepository
-    val json = Json(JsonConfiguration.Default.copy(ignoreUnknownKeys = true))
+    val json = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true))
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO + job
 
