@@ -51,9 +51,8 @@ object SchemaReader : CoroutineScope {
                         records.asSequence()
                                 .filter { it.key() != null && it.value() != null }
                                 .forEach { r ->
-                                    val key =     json.parse(SchemaRegistryKey.serializer(), r.key())
                                     val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
-                                    schemaRepo.saveSchema(key, message, r.timestamp())
+                                    schemaRepo.saveSchema(messageValue = message, timestamp = r.timestamp())
                                 }
                         consumer.commitSync(Duration.ofSeconds(2))
                     } catch (e: RetriableException) {

@@ -1,6 +1,7 @@
 package no.nav.nada
 
 import io.prometheus.client.Histogram
+import kotliquery.Row
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
@@ -44,68 +45,47 @@ class SchemaRepository(val dataSource: DataSource) {
         } ?: false
     }
 
+    fun Row.toSchema(): KafkaSchema =
+            KafkaSchema(
+                    id = this.string("id"),
+                    registry_id = this.long("registry_id"),
+                    subject = this.string("subject"),
+                    schema = this.string("schema_data"),
+                    version = this.long("version"),
+                    deleted = this.boolean("deleted"),
+                    created = this.instant("created"),
+                    supersededAt = this.instantOrNull("superseded_at"),
+                    supersededBy = this.stringOrNull("superseded_by")
+            )
+
     fun findSchemaForSubject(subject: String): List<KafkaSchema> {
         val timer = QUERY_TIMER.labels("find_schema").startTimer()
         return using(sessionOf(dataSource)) { session ->
             session.run(
                     queryOf(
                             """SELECT * FROM kafka_schema WHERE subject = :subject ORDER BY created DESC""", mapOf("subject" to subject)
-                    ).map { row ->
-                        KafkaSchema(
-                                id = row.string("id"),
-                                registry_id = row.long("registry_id"),
-                                subject = row.string("subject"),
-                                schema = row.string("schema_data"),
-                                version = row.long("version"),
-                                deleted = row.boolean("deleted"),
-                                created = row.instant("created"),
-                                supersededAt = row.instantOrNull("superseded_at"),
-                                supersededBy = row.stringOrNull("superseded_by")
-                        )
-                    }.asList
+                    ).map { row -> row.toSchema() }.asList
             ).also {
                 timer.observeDuration()
             }
         }
     }
 
-    fun saveSchema(key: SchemaRegistryKey, messageValue: SchemaRegistryMessage, timestamp: Long) {
+    fun saveSchema(messageValue: SchemaRegistryMessage, timestamp: Long) {
         if (!exists(subject = messageValue.subject,
                         version = messageValue.version,
                         registry_id = messageValue.id,
                         deleted = messageValue.deleted)
         ) {
-            val timer = QUERY_TIMER.labels("save_schema").startTimer()
-            val newId = ulid.nextULID()
-            using(sessionOf(dataSource)) { session ->
-                session.run(
-                        queryOf(
-                                """
-                                INSERT INTO kafka_schema 
-                                (id, subject, version, registry_id, schema_data, deleted, created)
-                                VALUES (:id, :subject, :version, :registry_id, :schema_data, :deleted, :created)
-                            """.trimIndent()
-                                , mapOf(
-                                "id" to newId,
-                                "registry_id" to messageValue.id,
-                                "subject" to messageValue.subject,
-                                "schema_data" to PGobject().apply {
-                                    type = "jsonb"
-                                    value = messageValue.schema
-                                },
-                                "version" to messageValue.version,
-                                "deleted" to messageValue.deleted,
-                                "created" to Instant.ofEpochMilli(timestamp)
-                        )
-                        ).asUpdate
-                )
-            }.also {
-                timer.observeDuration()
-            }
-            val previous = findSchemaForSubject(messageValue.subject).firstOrNull { !it.deleted && it.id != newId }
-            if (previous != null) {
-                supersede(previous.copy(supersededAt = Instant.ofEpochMilli(timestamp), supersededBy = newId))
-            }
+            val schema = KafkaSchema(
+                    registry_id = messageValue.id,
+                    subject = messageValue.subject,
+                    schema = messageValue.schema,
+                    version = messageValue.version,
+                    deleted = messageValue.deleted,
+                    created = Instant.ofEpochMilli(timestamp)
+            )
+            save(schema)
         }
 
     }
@@ -123,14 +103,59 @@ class SchemaRepository(val dataSource: DataSource) {
             }
         }
     }
+
+    fun save(schema: KafkaSchema) {
+        val timer = QUERY_TIMER.labels("save_schema").startTimer()
+        using(sessionOf(dataSource)) { session ->
+            session.run(
+                    queryOf(
+                            """
+                                INSERT INTO kafka_schema 
+                                (id, subject, version, registry_id, schema_data, deleted, created)
+                                VALUES (:id, :subject, :version, :registry_id, :schema_data, :deleted, :created)
+                            """.trimIndent()
+                            , mapOf(
+                            "id" to schema.id,
+                            "registry_id" to schema.registry_id,
+                            "subject" to schema.subject,
+                            "schema_data" to PGobject().apply {
+                                type = "jsonb"
+                                value = schema.schema
+                            },
+                            "version" to schema.version,
+                            "deleted" to schema.deleted,
+                            "created" to schema.created
+                    )
+                    ).asUpdate
+            )
+        }.also {
+            timer.observeDuration()
+        }
+        val previous = findSchemaForSubject(schema.subject).firstOrNull { !it.deleted && it.id != schema.id }
+        if (previous != null) {
+            supersede(previous.copy(supersededAt = schema.created, supersededBy = schema.id))
+        }
+    }
+
+    fun findById(id: String): KafkaSchema? {
+        val timer = QUERY_TIMER.labels("find_by_id").startTimer()
+        return using(sessionOf(dataSource)) { session ->
+            session.run(
+                    queryOf(
+                            """SELECT * FROM kafka_schema WHERE id = :id""", mapOf("id" to id)
+                    ).map { row -> row.toSchema() }.asSingle
+            )
+        }.also { timer.observeDuration() }
+
+    }
 }
 
-data class KafkaSchema(val id: String,
+data class KafkaSchema(val id: String = ulid.nextULID(),
                        val registry_id: Long,
                        val subject: String,
                        val schema: String,
                        val version: Long,
                        val deleted: Boolean,
                        val created: Instant,
-                       val supersededAt: Instant?,
-                       val supersededBy: String?)
+                       val supersededAt: Instant? = null,
+                       val supersededBy: String? = null)

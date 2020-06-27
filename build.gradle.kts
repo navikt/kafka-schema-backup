@@ -9,6 +9,7 @@ repositories {
     jcenter()
 }
 
+val assertJVersion = "3.16.1"
 val coroutinesVersion = "1.3.3"
 val flywayVersion = "6.5.0"
 val hikariVersion = "3.4.2"
@@ -19,6 +20,7 @@ val ktorVersion = "1.3.2"
 val log4jVersion = "2.13.1"
 val micrometerVersion = "1.5.2"
 val postgresVersion = "42.2.14"
+val postgresTestcontainerVersion = "1.14.3"
 val prometheusVersion = "0.9.0"
 val serializerVersion = "0.20.0"
 val slf4jVersion = "1.7.30"
@@ -56,6 +58,8 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
+    testImplementation("org.testcontainers:postgresql:$postgresTestcontainerVersion")
+    testImplementation("org.assertj:assertj-core:$assertJVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
 }
 
@@ -72,7 +76,7 @@ tasks.named<Jar>("jar") {
     archiveBaseName.set("app")
 
     manifest {
-        attributes["Main-Class"] = "no.nav.corona.AppKt"
+        attributes["Main-Class"] = "no.nav.nada.AppKt"
         attributes["Class-Path"] = configurations.runtimeClasspath.get().joinToString(separator = " ") {
             it.name
         }
