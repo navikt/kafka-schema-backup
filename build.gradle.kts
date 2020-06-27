@@ -10,7 +10,7 @@ repositories {
 }
 
 val coroutinesVersion = "1.3.3"
-val flywayVersion = "6.4.4"
+val flywayVersion = "6.5.0"
 val hikariVersion = "3.4.2"
 val kafkaVersion = "2.5.0"
 val junitJupiterVersion = "5.6.1"
@@ -20,7 +20,7 @@ val log4jVersion = "2.13.1"
 val micrometerVersion = "1.5.2"
 val postgresVersion = "42.2.14"
 val prometheusVersion = "0.9.0"
-val serializerVersion = "0.20.0"
+val serializerVersion = "0.14.0"
 val slf4jVersion = "1.7.30"
 val vaultJdbcVersion = "1.3.1"
 

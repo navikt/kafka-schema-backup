@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" packages="com.vlkan.log4j2.logstash.layout">
+   <Appenders>
+      <Console name="LOGSTASH" target="SYSTEM_OUT">
+         <LogstashLayout stackTraceEnabled="true"/>
+      </Console>
+
+      <Console name="STDOUT" target="SYSTEM_OUT">
+         <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+      </Console>
+
+      <Routing name="CONSOLE">
+         <Routes pattern="$${env:LOG_FORMAT:-plain}">
+            <Route ref="LOGSTASH" key="logstash"/>
+            <Route ref="STDOUT" key="plain"/>
+         </Routes>
+      </Routing>
+   </Appenders>
+
+   <Loggers>
+      <Root level="${env:LOG_LEVEL:-INFO}">
+         <AppenderRef ref="CONSOLE"/>
+      </Root>
+   </Loggers>
+</Configuration>
