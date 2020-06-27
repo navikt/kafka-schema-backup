@@ -1,0 +1,42 @@
+name: master
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  BASEIMAGE: docker.pkg.github.com/${{ github.repository }}/kafka-schema-backup
+
+jobs:
+  build:
+    name: Build and push Docker container
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: gradle/wrapper-validation-action@v1
+      - uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '14.x'
+      - name: test and build
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: true
+        run: ./gradlew test build
+      - name: Lag tag for image
+        run: echo "::set-env name=TAG::$(git log -1 --pretty='%ad_%h' --date=format:'%Y%m%d%H%M%S')"
+      - name: Lag full image referanse
+        run: echo "::set-env name=IMAGE::$BASEIMAGE:$TAG"
+      - name: Build docker image
+        run: docker build -t $IMAGE .
+      - name: Login to Github Package Registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY} -p ${GITHUB_TOKEN}
+      - name: Push Docker image
+        run: docker push $IMAGE
