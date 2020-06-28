@@ -24,6 +24,7 @@ class SchemaRepositoryTest {
             assertThat(saved.deleted).isEqualTo(schema.deleted)
         }
     }
+
     @Test
     fun `should update old version with new version`() {
         withMigratedDb {
@@ -35,6 +36,46 @@ class SchemaRepositoryTest {
             val oldSchema = repo.findById(schema.id)
             assertNotNull(oldSchema)
             assertThat(oldSchema!!.supersededBy).isEqualTo(newSchema.id)
+        }
+    }
+
+    @Test
+    fun `finds topic name from subject`() {
+        val schema = KafkaSchema(registry_id = 1, subject = "test-topic-value", version = 1, deleted = false, created = Instant.now(), schema = "{}")
+        assertThat(schema.topic()).isEqualTo("test-topic")
+    }
+
+    @Test
+    fun `lists unique topic names`() {
+        withMigratedDb {
+            val repo = SchemaRepository(DataSource.instance)
+            val schema = KafkaSchema(registry_id = 1, subject = "test-topic-value", version = 1, deleted = false, created = Instant.now(), schema = "{}")
+            repo.save(schema)
+            val keySchema = schema.copy(id = ulid.nextULID(), subject = "test-topic-key", created = Instant.now())
+            repo.save(keySchema)
+            val newVersion = schema.copy(id = ulid.nextULID(), version = 2, created = Instant.now())
+            repo.save(newVersion)
+            val topicList = repo.findTopics()
+            assertThat(topicList).hasSize(1)
+            assertThat(topicList.get(0)).isEqualTo("test-topic")
+        }
+    }
+
+    @Test
+    fun `fetches all versions of schema for a topic`() {
+        withMigratedDb {
+            val repo = SchemaRepository(DataSource.instance)
+            val schema = KafkaSchema(registry_id = 1, subject = "test-topic-value", version = 1, deleted = false, created = Instant.now(), schema = "{}")
+            repo.save(schema)
+            val keySchema = schema.copy(id = ulid.nextULID(), subject = "test-topic-key", created = Instant.now())
+            repo.save(keySchema)
+            val newVersion = schema.copy(id = ulid.nextULID(), version = 2, created = Instant.now())
+            repo.save(newVersion)
+            val topicInfo = repo.topicInfo("test-topic")
+            assertThat(topicInfo).hasSize(3)
+            val keyValueMap = topicInfo.groupBy { it.subject }
+            assertThat(keyValueMap).hasSize(2)
+            assertThat(keyValueMap).containsOnlyKeys("test-topic-value", "test-topic-key")
         }
     }
 }
@@ -61,4 +102,4 @@ internal object DataSource {
 internal fun withCleanDb(test: () -> Unit) = DataSource.instance.also { clean(it) }.run { test() }
 
 internal fun withMigratedDb(test: () -> Unit) =
-        DataSource.instance.also { clean(it) }.also { migrate(it) }.run { test() }
+    DataSource.instance.also { clean(it) }.also { migrate(it) }.run { test() }

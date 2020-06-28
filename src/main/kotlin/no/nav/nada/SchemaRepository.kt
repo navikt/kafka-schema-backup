@@ -1,6 +1,9 @@
+@file:UseSerializers(InstantSerializer::class)
 package no.nav.nada
 
 import io.prometheus.client.Histogram
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 import kotliquery.Row
 import kotliquery.queryOf
 import kotliquery.sessionOf
@@ -14,11 +17,11 @@ import javax.sql.DataSource
 class SchemaRepository(val dataSource: DataSource) {
     companion object {
         val QUERY_TIMER = Histogram.build()
-                .name("query_timer")
-                .namespace("no_nav_nada")
-                .help("Time taken to perform db query")
-                .labelNames("query")
-                .register()
+            .name("query_timer")
+            .namespace("no_nav_nada")
+            .help("Time taken to perform db query")
+            .labelNames("query")
+            .register()
         val logger: Logger = LoggerFactory.getLogger(SchemaRepository::class.java)
     }
 
@@ -26,19 +29,20 @@ class SchemaRepository(val dataSource: DataSource) {
         val timer = QUERY_TIMER.labels("exists_by_version_subject_registryid_deleted").startTimer()
         return using(sessionOf(dataSource)) { session ->
             session.run(
-                    queryOf(
-                            """SELECT exists(
+                queryOf(
+                    """SELECT exists(
 |                           SELECT 1 FROM kafka_schema WHERE 
 |                           subject = :subject 
 |                           AND registry_id = :registry_id 
 |                           AND deleted = :deleted 
-|                           AND version = :version)""".trimMargin()
-                            , mapOf(
-                            "subject" to subject,
-                            "registry_id" to registry_id,
-                            "version" to version,
-                            "deleted" to deleted
-                    )).map { it.boolean("exists") }.asSingle
+|                           AND version = :version)""".trimMargin(),
+                    mapOf(
+                        "subject" to subject,
+                        "registry_id" to registry_id,
+                        "version" to version,
+                        "deleted" to deleted
+                    )
+                ).map { it.boolean("exists") }.asSingle
             )
         }.also {
             timer.observeDuration()
@@ -46,25 +50,25 @@ class SchemaRepository(val dataSource: DataSource) {
     }
 
     fun Row.toSchema(): KafkaSchema =
-            KafkaSchema(
-                    id = this.string("id"),
-                    registry_id = this.long("registry_id"),
-                    subject = this.string("subject"),
-                    schema = this.string("schema_data"),
-                    version = this.long("version"),
-                    deleted = this.boolean("deleted"),
-                    created = this.instant("created"),
-                    supersededAt = this.instantOrNull("superseded_at"),
-                    supersededBy = this.stringOrNull("superseded_by")
-            )
+        KafkaSchema(
+            id = this.string("id"),
+            registry_id = this.long("registry_id"),
+            subject = this.string("subject"),
+            schema = this.string("schema_data"),
+            version = this.long("version"),
+            deleted = this.boolean("deleted"),
+            created = this.instant("created"),
+            supersededAt = this.instantOrNull("superseded_at"),
+            supersededBy = this.stringOrNull("superseded_by")
+        )
 
     fun findSchemaForSubject(subject: String): List<KafkaSchema> {
         val timer = QUERY_TIMER.labels("find_schema").startTimer()
         return using(sessionOf(dataSource)) { session ->
             session.run(
-                    queryOf(
-                            """SELECT * FROM kafka_schema WHERE subject = :subject ORDER BY created DESC""", mapOf("subject" to subject)
-                    ).map { row -> row.toSchema() }.asList
+                queryOf(
+                    """SELECT * FROM kafka_schema WHERE subject = :subject ORDER BY created DESC""", mapOf("subject" to subject)
+                ).map { row -> row.toSchema() }.asList
             ).also {
                 timer.observeDuration()
             }
@@ -72,32 +76,33 @@ class SchemaRepository(val dataSource: DataSource) {
     }
 
     fun saveSchema(messageValue: SchemaRegistryMessage, timestamp: Long) {
-        if (!exists(subject = messageValue.subject,
-                        version = messageValue.version,
-                        registry_id = messageValue.id,
-                        deleted = messageValue.deleted)
+        if (!exists(
+            subject = messageValue.subject,
+            version = messageValue.version,
+            registry_id = messageValue.id,
+            deleted = messageValue.deleted
+        )
         ) {
             val schema = KafkaSchema(
-                    registry_id = messageValue.id,
-                    subject = messageValue.subject,
-                    schema = messageValue.schema,
-                    version = messageValue.version,
-                    deleted = messageValue.deleted,
-                    created = Instant.ofEpochMilli(timestamp)
+                registry_id = messageValue.id,
+                subject = messageValue.subject,
+                schema = messageValue.schema,
+                version = messageValue.version,
+                deleted = messageValue.deleted,
+                created = Instant.ofEpochMilli(timestamp)
             )
             save(schema)
         }
-
     }
 
     fun supersede(schema: KafkaSchema) {
         val timer = QUERY_TIMER.labels("supersede_query").startTimer()
         using(sessionOf(dataSource)) { session ->
             session.run(
-                    queryOf(
-                            """UPDATE kafka_schema SET superseded_at = :superseded_at, superseded_by = :superseded_by WHERE id = :id""",
-                            mapOf("id" to schema.id, "superseded_at" to schema.supersededAt, "superseded_by" to schema.supersededBy)
-                    ).asUpdate
+                queryOf(
+                    """UPDATE kafka_schema SET superseded_at = :superseded_at, superseded_by = :superseded_by WHERE id = :id""",
+                    mapOf("id" to schema.id, "superseded_at" to schema.supersededAt, "superseded_by" to schema.supersededBy)
+                ).asUpdate
             ).also {
                 timer.observeDuration()
             }
@@ -108,25 +113,26 @@ class SchemaRepository(val dataSource: DataSource) {
         val timer = QUERY_TIMER.labels("save_schema").startTimer()
         using(sessionOf(dataSource)) { session ->
             session.run(
-                    queryOf(
-                            """
+                queryOf(
+                    """
                                 INSERT INTO kafka_schema 
-                                (id, subject, version, registry_id, schema_data, deleted, created)
-                                VALUES (:id, :subject, :version, :registry_id, :schema_data, :deleted, :created)
-                            """.trimIndent()
-                            , mapOf(
-                            "id" to schema.id,
-                            "registry_id" to schema.registry_id,
-                            "subject" to schema.subject,
-                            "schema_data" to PGobject().apply {
-                                type = "jsonb"
-                                value = schema.schema
-                            },
-                            "version" to schema.version,
-                            "deleted" to schema.deleted,
-                            "created" to schema.created
+                                (id, subject, version, registry_id, schema_data, deleted, created, topic)
+                                VALUES (:id, :subject, :version, :registry_id, :schema_data, :deleted, :created, :topic)
+                    """.trimIndent(),
+                    mapOf(
+                        "id" to schema.id,
+                        "registry_id" to schema.registry_id,
+                        "subject" to schema.subject,
+                        "schema_data" to PGobject().apply {
+                            type = "jsonb"
+                            value = schema.schema
+                        },
+                        "version" to schema.version,
+                        "deleted" to schema.deleted,
+                        "created" to schema.created,
+                        "topic" to schema.topic()
                     )
-                    ).asUpdate
+                ).asUpdate
             )
         }.also {
             timer.observeDuration()
@@ -141,21 +147,50 @@ class SchemaRepository(val dataSource: DataSource) {
         val timer = QUERY_TIMER.labels("find_by_id").startTimer()
         return using(sessionOf(dataSource)) { session ->
             session.run(
-                    queryOf(
-                            """SELECT * FROM kafka_schema WHERE id = :id""", mapOf("id" to id)
-                    ).map { row -> row.toSchema() }.asSingle
+                queryOf(
+                    """SELECT * FROM kafka_schema WHERE id = :id""", mapOf("id" to id)
+                ).map { row -> row.toSchema() }.asSingle
             )
         }.also { timer.observeDuration() }
+    }
 
+    fun findTopics(): List<String> {
+        return using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf("""SELECT DISTINCT topic FROM kafka_schema""", emptyMap()).map { it.string("topic") }.asList
+            )
+        }
+    }
+
+    fun topicInfo(topic: String): List<KafkaSchema> {
+        return using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf("""SELECT * FROM kafka_schema WHERE topic = :topic""", mapOf("topic" to topic))
+                    .map { r -> r.toSchema() }
+                    .asList
+            )
+        }
     }
 }
-
-data class KafkaSchema(val id: String = ulid.nextULID(),
-                       val registry_id: Long,
-                       val subject: String,
-                       val schema: String,
-                       val version: Long,
-                       val deleted: Boolean,
-                       val created: Instant,
-                       val supersededAt: Instant? = null,
-                       val supersededBy: String? = null)
+@Serializable
+data class KafkaSchema(
+    val id: String = ulid.nextULID(),
+    val registry_id: Long,
+    val subject: String,
+    val schema: String,
+    val version: Long,
+    val deleted: Boolean,
+    val created: Instant,
+    val supersededAt: Instant? = null,
+    val supersededBy: String? = null
+) {
+    fun topic(): String {
+        if (subject.endsWith("-key")) {
+            return subject.replace("-key", "")
+        } else if (subject.endsWith("-value")) {
+            return subject.replace("-value", "")
+        } else {
+            return subject
+        }
+    }
+}

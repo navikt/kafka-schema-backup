@@ -7,7 +7,7 @@ import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.serialization.StringDeserializer
 import java.io.File
-import java.util.*
+import java.util.Properties
 
 fun kafkaConfigFrom(config: ApplicationConfig, serviceUser: ServiceUser? = null): Properties {
     return Properties().apply {
@@ -23,7 +23,7 @@ fun kafkaConfigFrom(config: ApplicationConfig, serviceUser: ServiceUser? = null)
     }
 }
 
-private fun credentials(config: ApplicationConfig, serviceUser: ServiceUser) : Properties {
+private fun credentials(config: ApplicationConfig, serviceUser: ServiceUser): Properties {
     return Properties().apply {
         put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL")
         put(SaslConfigs.SASL_MECHANISM, "PLAIN")

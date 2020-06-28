@@ -7,13 +7,12 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
-import kotlinx.serialization.json.JsonObject
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.errors.RetriableException
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.temporal.ChronoUnit
-import java.util.*
+import java.util.Properties
 import kotlin.coroutines.CoroutineContext
 
 object SchemaReader : CoroutineScope {
@@ -49,11 +48,11 @@ object SchemaReader : CoroutineScope {
                     try {
                         val records = consumer.poll(Duration.of(100, ChronoUnit.MILLIS))
                         records.asSequence()
-                                .filter { it.key() != null && it.value() != null }
-                                .forEach { r ->
-                                    val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
-                                    schemaRepo.saveSchema(messageValue = message, timestamp = r.timestamp())
-                                }
+                            .filter { it.key() != null && it.value() != null }
+                            .forEach { r ->
+                                val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
+                                schemaRepo.saveSchema(messageValue = message, timestamp = r.timestamp())
+                            }
                         consumer.commitSync(Duration.ofSeconds(2))
                     } catch (e: RetriableException) {
                         logger.warn("Something went wrong while polling _schemas", e)
@@ -62,7 +61,6 @@ object SchemaReader : CoroutineScope {
             }
         }
     }
-
 }
 
 @Serializable
