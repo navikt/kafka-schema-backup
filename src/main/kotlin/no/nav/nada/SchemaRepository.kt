@@ -171,6 +171,62 @@ class SchemaRepository(val dataSource: DataSource) {
             )
         }
     }
+
+    fun getSubjects(): List<String> {
+        return using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf("""SELECT DISTINCT subject FROM kafka_schema WHERE NOT deleted ORDER BY subject DESC""", emptyMap()).map { it.string("subject") }.asList
+            )
+        }
+    }
+
+    fun getVersions(subject: String): List<Long> {
+        return using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf(
+                    """SELECT DISTINCT version 
+|                                         FROM kafka_schema
+|                                         WHERE subject = :subject 
+|                                         AND NOT deleted 
+|                                         ORDER BY version ASC""".trimMargin(),
+                    mapOf("subject" to subject)
+                ).map { it.long("version") }.asList
+            )
+        }
+    }
+
+    fun getSchema(subject: String, version: Long): KafkaSchema? {
+        return using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf(
+                    """SELECT * FROM kafka_schema WHERE subject = :subject AND version = :version AND NOT deleted""", mapOf("subject" to subject, "version" to version)
+                ).map { it.toSchema() }.asSingle
+            )
+        }
+    }
+
+    fun getSchemaByRegistryId(id: Long): String? {
+        return using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf(
+                    """
+                        SELECT schema_data FROM kafka_schema WHERE registry_id = :id ORDER BY created LIMIT 1
+                    """.trimIndent(),
+                    mapOf("id" to id)
+                ).map { it.string("schema_data") }.asSingle
+            )
+        }
+    }
+
+    fun deleteSubject(subject: String): Int {
+        return using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf(
+                    """UPDATE kafka_schema SET deleted = true WHERE subject = :subject""", mapOf("subject" to subject)
+                ).asUpdate
+            )
+        }
+    }
 }
 @Serializable
 data class KafkaSchema(

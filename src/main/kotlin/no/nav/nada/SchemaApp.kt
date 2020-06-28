@@ -12,8 +12,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.metrics.micrometer.MicrometerMetrics
 import io.ktor.request.path
 import io.ktor.response.respond
-import io.ktor.response.respondText
-import io.ktor.response.respondTextWriter
 import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.serialization.json
@@ -26,7 +24,6 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.prometheus.client.CollectorRegistry
-import io.prometheus.client.exporter.common.TextFormat
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import org.flywaydb.core.Flyway
@@ -76,18 +73,7 @@ fun Application.schemaApi(
         )
     }
     routing {
-        get("/internal/isalive") {
-            call.respondText("UP")
-        }
-        get("/internal/isready") {
-            call.respondText("UP")
-        }
-        get("/internal/prometheus") {
-            val names = call.request.queryParameters.getAll("name")?.toSet() ?: emptySet()
-            call.respondTextWriter(ContentType.parse(TextFormat.CONTENT_TYPE_004), HttpStatusCode.OK) {
-                TextFormat.write004(this, CollectorRegistry.defaultRegistry.filteredMetricFamilySamples(names))
-            }
-        }
+        nais()
         get("/") {
             val topics = schemaRepository.findTopics()
             call.respond(mapOf("topics" to topics))
@@ -98,6 +84,7 @@ fun Application.schemaApi(
                 call.respond(mapOf("schemas" to topicInfo))
             } ?: call.respond(HttpStatusCode.BadRequest)
         }
+        schemaRegistry(schemaRepository)
     }
 }
 

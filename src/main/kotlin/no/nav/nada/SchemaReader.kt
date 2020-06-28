@@ -50,8 +50,17 @@ object SchemaReader : CoroutineScope {
                         records.asSequence()
                             .filter { it.key() != null && it.value() != null }
                             .forEach { r ->
-                                val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
-                                schemaRepo.saveSchema(messageValue = message, timestamp = r.timestamp())
+                                val key = json.parse(SchemaRegistryKey.serializer(), r.key())
+                                when (key.keytype) {
+                                    "DELETE_SUBJECT" -> {
+                                        val deleteMessage = json.parse(SchemaRegistryDeleteMessage.serializer(), r.value())
+                                        schemaRepo.deleteSubject(deleteMessage.subject)
+                                    }
+                                    else -> {
+                                        val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
+                                        schemaRepo.saveSchema(messageValue = message, timestamp = r.timestamp())
+                                    }
+                                }
                             }
                         consumer.commitSync(Duration.ofSeconds(2))
                     } catch (e: RetriableException) {
@@ -67,4 +76,7 @@ object SchemaReader : CoroutineScope {
 data class SchemaRegistryMessage(val subject: String, val version: Long, val id: Long, val schema: String, val deleted: Boolean)
 
 @Serializable
-data class SchemaRegistryKey(val subject: String, val version: Long, val magic: Long, val keytype: String)
+data class SchemaRegistryDeleteMessage(val subject: String, val version: Long)
+
+@Serializable
+data class SchemaRegistryKey(val subject: String, val version: Long? = null, val magic: Long, val keytype: String)

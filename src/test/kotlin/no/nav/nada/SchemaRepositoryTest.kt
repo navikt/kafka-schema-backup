@@ -78,6 +78,70 @@ class SchemaRepositoryTest {
             assertThat(keyValueMap).containsOnlyKeys("test-topic-value", "test-topic-key")
         }
     }
+
+    @Test
+    fun `can list versions of a subject`() {
+        withMigratedDb {
+            val repo = SchemaRepository(DataSource.instance)
+            val schema = KafkaSchema(registry_id = 1, subject = "test-topic-value", version = 1, deleted = false, created = Instant.now(), schema = "{}")
+            repo.save(schema)
+            val secondVersion = schema.copy(id = ulid.nextULID(), version = 2)
+            repo.save(secondVersion)
+            val versions = repo.getVersions("test-topic-value")
+            assertThat(versions).hasSize(2)
+            assertThat(versions).containsExactly(1L, 2L)
+        }
+    }
+
+    @Test
+    fun `lists unique subject names`() {
+        withMigratedDb {
+            val repo = SchemaRepository(DataSource.instance)
+            val schema = KafkaSchema(registry_id = 1, subject = "test-topic-value", version = 1, deleted = false, created = Instant.now(), schema = "{}")
+            repo.save(schema)
+            val secondVersion = schema.copy(id = ulid.nextULID(), version = 2)
+            repo.save(secondVersion)
+            val versions = repo.getSubjects()
+            assertThat(versions).hasSize(1)
+            assertThat(versions).containsExactly("test-topic-value")
+        }
+    }
+
+    @Test
+    fun `can fetch schema for a subject and version`() {
+        withMigratedDb {
+            val repo = SchemaRepository(DataSource.instance)
+            val firstVersion = KafkaSchema(registry_id = 1, subject = "test-topic-value", version = 1, deleted = false, created = Instant.now(), schema = "{}")
+            repo.save(firstVersion)
+            val secondVersion = firstVersion.copy(
+                id = ulid.nextULID(), version = 2,
+                schema =
+                    """{"name": "DiceRoll", "type": "record", "fields": [{"name": "dice", "type": {"type": "array", "items": "int"}}, {"name": "count", "type": "int"}], "namespace": "no.nav.kafkacodelab"}"""
+            )
+            repo.save(secondVersion)
+            val firstSchema = repo.getSchema("test-topic-value", 1L)!!
+            assertThat(firstSchema.schema).isEqualTo(firstVersion.schema)
+            val secondSchema = repo.getSchema("test-topic-value", 2L)!!
+            assertThat(secondSchema.schema).isEqualTo(secondVersion.schema)
+        }
+    }
+
+    @Test
+    fun `can fetch schema by registry id`() {
+        withMigratedDb {
+            val repo = SchemaRepository(DataSource.instance)
+            val firstVersion = KafkaSchema(registry_id = 1, subject = "test-topic-value", version = 1, deleted = false, created = Instant.now(), schema = "{}")
+            repo.save(firstVersion)
+            val secondVersion = firstVersion.copy(
+                id = ulid.nextULID(), registry_id = 2, version = 2,
+                schema =
+                    """{"name": "DiceRoll", "type": "record", "fields": [{"name": "dice", "type": {"type": "array", "items": "int"}}, {"name": "count", "type": "int"}], "namespace": "no.nav.kafkacodelab"}"""
+            )
+            repo.save(secondVersion)
+            assertThat(repo.getSchemaByRegistryId(1)).isEqualTo(firstVersion.schema)
+            assertThat(repo.getSchemaByRegistryId(2)).isEqualTo(secondVersion.schema)
+        }
+    }
 }
 
 internal object PostgresContainer {
