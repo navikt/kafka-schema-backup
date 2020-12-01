@@ -36,19 +36,22 @@ jobs:
           TESTCONTAINERS_RYUK_DISABLED: true
         run: ./gradlew test build
       - name: Lag tag for image
-        run: echo "TAG=$(git log -1 --pretty='%ad_%h' --date=format:'%Y%m%d%H%M%S')" >> ${GITHUB_ENV}
+        run: echo "TAG=$(date +%Y%m%d%H%M%S)-$(git describe --always --dirty --exclude '*')" >> ${GITHUB_ENV}
       - name: Lag full image referanse
-        run: echo "IMAGE=${BASEIMAGE}:${TAG}" >> ${GITHUB_ENV}
+        id: declare
+        run: |
+          echo "IMAGE=${BASEIMAGE}:${TAG}" >> ${GITHUB_ENV}
+          echo "::set-output name=image::${BASEIMAGE}:${TAG}"
       - name: Build docker image
-        run: docker build -t $IMAGE .
+        run: docker build -t ${IMAGE} .
       - name: Login to Github Package Registry
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY} -p ${GITHUB_TOKEN}
       - name: Push Docker image
-        run: docker push $IMAGE
+        run: docker push ${IMAGE}
     outputs:
-      image: "${{ env.image }}"
+      image: "${{ steps.declare.outputs.image }}"
   deploy-dev-gcp:
     name: Deploy to dev-gcp
     needs: build
