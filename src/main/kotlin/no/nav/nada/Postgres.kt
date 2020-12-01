@@ -17,7 +17,6 @@ fun databaseConfigFrom(appConfig: ApplicationConfig) = DatabaseConfig(
         name = appConfig.propertyOrNull("database.name")?.getString() ?: "nada-schema-backup",
         username = appConfig.propertyOrNull("database.user")?.getString() ?: "nada",
         password = appConfig.propertyOrNull("database.password")?.getString() ?: "nadapassword",
-        //vaultMountPath = appConfig.propertyOrNull("database.vault_mount_path_${appConfig.envKind}")?.getString() ?: "",
         local = appConfig.propertyOrNull("ktor.environment")?.getString() == "local"
 )
 
@@ -39,7 +38,6 @@ data class DatabaseConfig(
         val name: String,
         val username: String,
         val password: String,
-        //val vaultMountPath: String,
         val local: Boolean = false
 )
 
