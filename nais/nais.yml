@@ -15,12 +15,12 @@ spec:
     max: 2
     cpuThresholdPercentage: 70
   liveness:
-    path: /isalive
+    path: /internal/isalive
   readiness:
-    path: /isready
+    path: /internal/isready
   prometheus:
     enabled: true
-    path: /prometheus
+    path: /internal/prometheus
   resources:
     limits:
       cpu: 600m
