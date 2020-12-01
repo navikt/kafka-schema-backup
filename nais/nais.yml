@@ -4,15 +4,12 @@ metadata:
   name: kafka-schema-backup
   namespace: default
   labels:
-    team: dataplattform
+    team: aura
 spec:
   image: {{ image }}
   port: 9090
   ingresses:
-    - https://kafka-schema-backup.nais.preprod.local
-    - https://kafka-schema-backup.dev-fss.nais.io
-    - https://kafka-schema-backup.nais.adeo.no
-    - https://kafka-schema-backup.prod-fss.nais.io
+    - https://kafka-schema-backup.dev-gcp.nais.io
   replicas:
     min: 1
     max: 2
@@ -31,3 +28,14 @@ spec:
     requests:
       cpu: 300m
       memory: 384Mi
+  gcp:
+    sqlInstances:
+      - name: kafka-schema-backup
+        type: POSTGRES_12
+        tier: db-f1-micro
+        diskType: SSD
+        highAvailability: true
+        diskSize: 10
+        diskAutoresize: true
+        autoBackupTime: "03:00"
+        cascadingDelete: false
