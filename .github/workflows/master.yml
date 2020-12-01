@@ -47,6 +47,8 @@ jobs:
         run: docker login docker.pkg.github.com -u ${GITHUB_REPOSITORY} -p ${GITHUB_TOKEN}
       - name: Push Docker image
         run: docker push $IMAGE
+    outputs:
+      image: "${{ env.image }}"
   deploy-dev-gcp:
     name: Deploy to dev-gcp
     needs: build
@@ -58,3 +60,4 @@ jobs:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-gcp
           RESOURCE: nais/nais.yml
+          VAR: image=${{ needs.build.outputs.image }}
