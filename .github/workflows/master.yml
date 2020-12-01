@@ -49,7 +49,7 @@ jobs:
         run: docker push $IMAGE
       deploy-dev-gcp:
         name: Deploy to dev-gcp
-        needs: build-code-and-push-docker # Depends on build-code-and-push-docker job
+        needs: build
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v2.3.4
