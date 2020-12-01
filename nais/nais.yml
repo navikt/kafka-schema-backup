@@ -31,3 +31,14 @@ spec:
     requests:
       cpu: 300m
       memory: 384Mi
+  gcp:
+    sqlInstances:
+      - name: nada-schema-backup
+        type: POSTGRES_12
+        tier: db-f1-micro
+        diskType: SSD
+        highAvailability: true
+        diskSize: 10
+        diskAutoresize: true
+        autoBackupTime: "03:00"
+        cascadingDelete: false
