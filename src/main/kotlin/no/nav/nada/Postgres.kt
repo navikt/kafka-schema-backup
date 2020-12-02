@@ -16,7 +16,7 @@ fun databaseConfigFrom(appConfig: ApplicationConfig) = DatabaseConfig(
         port = appConfig.propertyOrNull("database.port")?.getString()?.toInt() ?: 54321,
         name = appConfig.propertyOrNull("database.name")?.getString() ?: "nada-schema-backup",
         username = appConfig.propertyOrNull("database.username")?.getString() ?: "nada",
-        password = appConfig.property("database.password")?.getString() ,
+        password = appConfig.property("database.password").getString() ,
         local = appConfig.propertyOrNull("ktor.environment")?.getString() == "local"
 )
 
