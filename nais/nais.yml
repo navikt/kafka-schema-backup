@@ -36,6 +36,7 @@ spec:
       - type: POSTGRES_12
         databases:
           - name: kafka-schema-backup-db
+            envVarPrefix: DB
         tier: db-f1-micro
         diskType: SSD
         highAvailability: true
