@@ -63,4 +63,4 @@ jobs:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-gcp
           RESOURCE: nais/nais.yml
-          VAR: image=${{ needs.build.outputs.image }},ktor_env="dev"
+          VAR: image=${{ needs.build.outputs.image }}, ktor_env="dev"
