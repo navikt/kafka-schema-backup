@@ -28,6 +28,9 @@ spec:
     requests:
       cpu: 300m
       memory: 384Mi
+  env:
+    - name: ktor_env
+      value: {{ ktor_env }}
   gcp:
     sqlInstances:
       - type: POSTGRES_12

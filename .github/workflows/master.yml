@@ -64,3 +64,4 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: nais/nais.yml
           VAR: image=${{ needs.build.outputs.image }}
+          VAR: ktor_env="dev"
