@@ -7,7 +7,7 @@ import no.nav.vault.jdbc.hikaricp.HikariCPVaultUtil
 import org.flywaydb.core.Flyway
 import javax.sql.DataSource
 
-fun dataSourceFrom(config: DatabaseConfig): DataSource {
+fun dataSourceFrom(config: DatabaseConfig, role: String = "user"): DataSource {
     return HikariDataSource(hikariConfigFrom(config))
 }
 
