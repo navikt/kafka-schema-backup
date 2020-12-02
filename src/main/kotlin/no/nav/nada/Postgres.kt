@@ -12,9 +12,9 @@ fun dataSourceFrom(config: DatabaseConfig, role: String = "user"): DataSource {
 }
 
 fun databaseConfigFrom(appConfig: ApplicationConfig) = DatabaseConfig(
-        host = appConfig.propertyOrNull("database.host")?.getString() ?: "localhost",
-        port = appConfig.propertyOrNull("database.port")?.getString()?.toInt() ?: 5432,
-        name = appConfig.propertyOrNull("database.name")?.getString() ?: "kafka-schema-backup",
+        host = appConfig.propertyOrNull("database.host")?.getString() ?: "localhost1",
+        port = appConfig.propertyOrNull("database.port")?.getString()?.toInt() ?: 54321,
+        name = appConfig.propertyOrNull("database.name")?.getString() ?: "nada-schema-backup",
         username = appConfig.propertyOrNull("database.user")?.getString() ?: "nada",
         password = appConfig.propertyOrNull("database.password")?.getString() ?: "nadapassword",
         local = appConfig.propertyOrNull("ktor.environment")?.getString() == "local"

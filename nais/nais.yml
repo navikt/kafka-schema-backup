@@ -34,9 +34,8 @@ spec:
   gcp:
     sqlInstances:
       - type: POSTGRES_12
-        name: kafka-schema-backup
         databases:
-          - name: kafka-schema-backup
+          - name: kafka-schema-backup-db
         tier: db-f1-micro
         diskType: SSD
         highAvailability: true
