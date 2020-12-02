@@ -7,7 +7,7 @@ import no.nav.vault.jdbc.hikaricp.HikariCPVaultUtil
 import org.flywaydb.core.Flyway
 import javax.sql.DataSource
 
-fun dataSourceFrom(config: DatabaseConfig, role: String = "user"): DataSource {
+fun dataSourceFrom(config: DatabaseConfig): DataSource {
     return HikariDataSource(hikariConfigFrom(config))
 }
 
@@ -15,7 +15,7 @@ fun databaseConfigFrom(appConfig: ApplicationConfig) = DatabaseConfig(
         host = appConfig.propertyOrNull("database.host")?.getString() ?: "localhost1",
         port = appConfig.propertyOrNull("database.port")?.getString()?.toInt() ?: 54321,
         name = appConfig.propertyOrNull("database.name")?.getString() ?: "nada-schema-backup",
-        username = appConfig.propertyOrNull("database.user")?.getString() ?: "nada",
+        username = appConfig.propertyOrNull("database.username")?.getString() ?: "nada",
         password = appConfig.propertyOrNull("database.password")?.getString() ?: "nadapassword",
         local = appConfig.propertyOrNull("ktor.environment")?.getString() == "local"
 )
