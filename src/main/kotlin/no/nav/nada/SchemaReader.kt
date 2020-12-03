@@ -51,22 +51,23 @@ object SchemaReader : CoroutineScope {
                         records.asSequence()
                                 .filter { it.key() != null && it.value() != null }
                                 .forEach { r ->
-                                    try {
-                                        val key = json.parse(SchemaRegistryKey.serializer(), r.key())
-                                        when (key.keytype) {
-                                            "DELETE_SUBJECT" -> {
-                                                val deleteMessage = json.parse(SchemaRegistryDeleteMessage.serializer(), r.value())
-                                                schemaRepo.deleteSubject(deleteMessage.subject)
-                                            }
-                                            else -> {
 
-                                                val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
-                                                schemaRepo.saveSchema(messageValue = message, timestamp = r.timestamp())
-                                            }
+                                    val key = json.parse(SchemaRegistryKey.serializer(), r.key())
+                                    when (key.keytype) {
+                                        "SCHEMA"-> {
+                                            val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
+                                            schemaRepo.saveSchema(messageValue = message, timestamp = r.timestamp())
+                                            logger.info("saved schema $message")
                                         }
-                                    } catch (e: SerializationException) {
-                                        logger.warn("could not handle message. Key:  " + r.key() + " value: " + r.value(), e)
+                                        "DELETE_SUBJECT" -> {
+                                            val deleteMessage = json.parse(SchemaRegistryDeleteMessage.serializer(), r.value())
+                                            schemaRepo.deleteSubject(deleteMessage.subject)
+                                        }
+                                        else -> {
+                                           logger.info("Message has unknown subject")
+                                        }
                                     }
+
                                 }
                         consumer.commitSync(Duration.ofSeconds(2))
                     } catch (e: RetriableException) {
