@@ -29,8 +29,10 @@ spec:
       cpu: 300m
       memory: 384Mi
   env:
-    - name: ktor.environment
+    - name: ktor_environment
       value: {{ ktor_env }}
+    - name: kafka_brokers
+      value: {{kafka_brokers}}
   gcp:
     sqlInstances:
       - type: POSTGRES_12
