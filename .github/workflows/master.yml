@@ -64,5 +64,5 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: nais/nais.yml
           VAR: image=${{ needs.build.outputs.image }}
-          VARS: dev.yaml
+          VARS: nais/dev.yaml
           PRINT_PAYLOAD: true
