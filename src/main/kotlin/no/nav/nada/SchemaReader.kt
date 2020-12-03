@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -48,20 +49,25 @@ object SchemaReader : CoroutineScope {
                     try {
                         val records = consumer.poll(Duration.of(100, ChronoUnit.MILLIS))
                         records.asSequence()
-                            .filter { it.key() != null && it.value() != null }
-                            .forEach { r ->
-                                val key = json.parse(SchemaRegistryKey.serializer(), r.key())
-                                when (key.keytype) {
-                                    "DELETE_SUBJECT" -> {
-                                        val deleteMessage = json.parse(SchemaRegistryDeleteMessage.serializer(), r.value())
-                                        schemaRepo.deleteSubject(deleteMessage.subject)
-                                    }
-                                    else -> {
-                                        val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
-                                        schemaRepo.saveSchema(messageValue = message, timestamp = r.timestamp())
+                                .filter { it.key() != null && it.value() != null }
+                                .forEach { r ->
+                                    try {
+                                        val key = json.parse(SchemaRegistryKey.serializer(), r.key())
+                                        when (key.keytype) {
+                                            "DELETE_SUBJECT" -> {
+                                                val deleteMessage = json.parse(SchemaRegistryDeleteMessage.serializer(), r.value())
+                                                schemaRepo.deleteSubject(deleteMessage.subject)
+                                            }
+                                            else -> {
+
+                                                val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
+                                                schemaRepo.saveSchema(messageValue = message, timestamp = r.timestamp())
+                                            }
+                                        }
+                                    } catch (e: SerializationException) {
+                                        logger.warn("could not handle message. Key:  " + r.key() + " value: " + r.value(), e)
                                     }
                                 }
-                            }
                         consumer.commitSync(Duration.ofSeconds(2))
                     } catch (e: RetriableException) {
                         logger.warn("Something went wrong while polling _schemas", e)

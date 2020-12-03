@@ -25,6 +25,7 @@ class SchemaRepositoryTest {
         }
     }
 
+
     @Test
     fun `should update old version with new version`() {
         withMigratedDb {
