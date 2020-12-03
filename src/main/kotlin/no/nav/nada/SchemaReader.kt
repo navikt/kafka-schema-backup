@@ -1,5 +1,7 @@
 package no.nav.nada
 
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,6 +23,12 @@ object SchemaReader : CoroutineScope {
     lateinit var job: Job
     lateinit var kafkaProps: Properties
     lateinit var schemaRepo: SchemaRepository
+    lateinit var meterRegistry: MeterRegistry
+
+    lateinit var schemaAdded: Counter
+    lateinit var schemaDeleted: Counter
+
+
     val json = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true))
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO + job
@@ -29,15 +37,19 @@ object SchemaReader : CoroutineScope {
         job.cancel()
     }
 
+
     fun isRunning(): Boolean {
         logger.trace("Asked if running")
         return job.isActive
     }
 
-    fun create(kafkaProps: Properties, schemaRepo: SchemaRepository) {
+    fun create(kafkaProps: Properties, schemaRepo: SchemaRepository, meterRegistry: MeterRegistry) {
         this.job = Job()
         this.kafkaProps = kafkaProps
         this.schemaRepo = schemaRepo
+        this.meterRegistry = meterRegistry
+        this.schemaAdded = this.meterRegistry.counter("schema.added")
+        this.schemaDeleted = this.meterRegistry.counter("schema.deleted")
     }
 
     fun run() {
@@ -54,17 +66,19 @@ object SchemaReader : CoroutineScope {
 
                                     val key = json.parse(SchemaRegistryKey.serializer(), r.key())
                                     when (key.keytype) {
-                                        "SCHEMA"-> {
+                                        "SCHEMA" -> {
                                             val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
                                             schemaRepo.saveSchema(messageValue = message, timestamp = r.timestamp())
                                             logger.info("saved schema $message")
+                                            schemaAdded.increment()
                                         }
                                         "DELETE_SUBJECT" -> {
                                             val deleteMessage = json.parse(SchemaRegistryDeleteMessage.serializer(), r.value())
                                             schemaRepo.deleteSubject(deleteMessage.subject)
+                                            schemaDeleted.increment()
                                         }
                                         else -> {
-                                           logger.info("Message has unknown subject")
+                                            logger.info("Message has unknown subject")
                                         }
                                     }
 

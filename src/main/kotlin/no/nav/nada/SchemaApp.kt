@@ -42,7 +42,7 @@ fun Application.schemaApi(
     val flyway = Flyway.configure().dataSource(flywayDs).load()
     flyway.migrate()
     SchemaReader.apply {
-        create(kafkaConfigFrom(appConfig, serviceUser(appConfig)), schemaRepository)
+        create(kafkaConfigFrom(appConfig, serviceUser(appConfig)), schemaRepository, meterRegistry)
         run()
     }
     install(CallLogging) {
