@@ -9,7 +9,7 @@ spec:
   image: {{ image }}
   port: 9090
   ingresses:
-    - https://kafka-schema-backup.dev-gcp.nais.io
+    - {{ ingress }}
   replicas:
     min: 1
     max: 2

@@ -65,4 +65,18 @@ jobs:
           RESOURCE: nais/nais.yml
           VAR: image=${{ needs.build.outputs.image }}
           VARS: nais/dev.yaml
-          PRINT_PAYLOAD: true
+  deploy-prod-gcp:
+    name: Deploy to prod-gcp
+    needs:
+      - build
+      - deploy-dev-gcp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-gcp
+          RESOURCE: nais/nais.yml
+          VAR: image=${{ needs.build.outputs.image }}
+          VARS: nais/prod.yaml
