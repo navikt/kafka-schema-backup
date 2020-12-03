@@ -33,9 +33,9 @@ import java.nio.file.Paths
 import javax.sql.DataSource
 
 fun Application.schemaApi(
-    appConfig: ApplicationConfig = this.environment.config,
-    dataSource: DataSource = dataSourceFrom(databaseConfigFrom(appConfig)),
-    schemaRepository: SchemaRepository = SchemaRepository(dataSource)
+        appConfig: ApplicationConfig = this.environment.config,
+        dataSource: DataSource = dataSourceFrom(databaseConfigFrom(appConfig)),
+        schemaRepository: SchemaRepository = SchemaRepository(dataSource)
 ) {
     val jsonConfig = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true))
     val flywayDs = dataSourceFrom(databaseConfigFrom(appConfig), "admin")
@@ -54,22 +54,22 @@ fun Application.schemaApi(
     install(DefaultHeaders)
     install(ContentNegotiation) {
         json(
-            json = jsonConfig,
-            contentType = ContentType.Application.Json
+                json = jsonConfig,
+                contentType = ContentType.Application.Json
         )
     }
     install(MicrometerMetrics) {
         registry = PrometheusMeterRegistry(
-            PrometheusConfig.DEFAULT,
-            CollectorRegistry.defaultRegistry,
-            Clock.SYSTEM
+                PrometheusConfig.DEFAULT,
+                CollectorRegistry.defaultRegistry,
+                Clock.SYSTEM
         )
         meterBinders = listOf(
-            ClassLoaderMetrics(),
-            JvmMemoryMetrics(),
-            JvmGcMetrics(),
-            ProcessorMetrics(),
-            JvmThreadMetrics()
+                ClassLoaderMetrics(),
+                JvmMemoryMetrics(),
+                JvmGcMetrics(),
+                ProcessorMetrics(),
+                JvmThreadMetrics()
         )
     }
     routing {
@@ -88,14 +88,10 @@ fun Application.schemaApi(
     }
 }
 
-fun serviceUser(appConfig: ApplicationConfig): ServiceUser? {
-    val serviceUserBase = Paths.get(appConfig.property("nais.serviceuser").getString())
-    return if (Files.exists(serviceUserBase)) {
-        ServiceUser(
-            username = Files.readString(serviceUserBase.resolve("username")),
-            password = Files.readString(serviceUserBase.resolve("password"))
-        )
-    } else {
-        null
-    }
+fun serviceUser(appConfig: ApplicationConfig): ServiceUser {
+    return ServiceUser(
+            username = appConfig.property("serviceuser.username").getString(),
+            password = appConfig.property("serviceuser.password").getString()
+    )
+
 }
