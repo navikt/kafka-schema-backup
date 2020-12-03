@@ -27,7 +27,7 @@ private fun credentials(config: ApplicationConfig, serviceUser: ServiceUser): Pr
     return Properties().apply {
         put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL")
         put(SaslConfigs.SASL_MECHANISM, "PLAIN")
-        put(SaslConfigs.SASL_JAAS_CONFIG, """org.apache.kafka.common.security.plain.PlainLoginModule required username="${serviceUser.username}}" password="${serviceUser.password}"; """)
+        put(SaslConfigs.SASL_JAAS_CONFIG, """org.apache.kafka.common.security.plain.PlainLoginModule required username="${serviceUser.username}" password="${serviceUser.password}"; """)
         put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, getTrustStore(config))
         put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, getTrustStorePassword(config))
     }
