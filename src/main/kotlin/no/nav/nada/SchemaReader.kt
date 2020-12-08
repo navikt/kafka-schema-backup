@@ -1,5 +1,9 @@
 package no.nav.nada
 
+import io.ktor.metrics.micrometer.*
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import io.prometheus.client.CollectorRegistry
+import io.prometheus.client.Counter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -18,6 +22,8 @@ import kotlin.coroutines.CoroutineContext
 
 object SchemaReader : CoroutineScope {
     val logger = LoggerFactory.getLogger(SchemaReader::class.java)
+    val addedSchemas = Counter.build().name("addedSchema").create()
+    val deletedSchemas = Counter.build().name("deletedSchema").create()
     lateinit var job: Job
     lateinit var kafkaProps: Properties
     lateinit var schemaRepo: SchemaRepository
@@ -54,17 +60,19 @@ object SchemaReader : CoroutineScope {
 
                                     val key = json.parse(SchemaRegistryKey.serializer(), r.key())
                                     when (key.keytype) {
-                                        "SCHEMA"-> {
+                                        "SCHEMA" -> {
                                             val message = json.parse(SchemaRegistryMessage.serializer(), r.value())
                                             schemaRepo.saveSchema(messageValue = message, timestamp = r.timestamp())
                                             logger.info("saved schema $message")
+                                            addedSchemas.inc()
                                         }
                                         "DELETE_SUBJECT" -> {
                                             val deleteMessage = json.parse(SchemaRegistryDeleteMessage.serializer(), r.value())
                                             schemaRepo.deleteSubject(deleteMessage.subject)
+                                            deletedSchemas.inc()
                                         }
                                         else -> {
-                                           logger.info("Message has unknown subject")
+                                            logger.info("Message has unknown subject")
                                         }
                                     }
 
