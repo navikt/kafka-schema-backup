@@ -22,8 +22,8 @@ import kotlin.coroutines.CoroutineContext
 
 object SchemaReader : CoroutineScope {
     val logger = LoggerFactory.getLogger(SchemaReader::class.java)
-    val addedSchemas = Counter.build().name("addedSchema").create()
-    val deletedSchemas = Counter.build().name("deletedSchema").create()
+    val addedSchemas = Counter.build().name("addedSchema").help("shows the added schemas").create()
+    val deletedSchemas = Counter.build().name("deletedSchema").help("shows the deleted schemas").create()
     lateinit var job: Job
     lateinit var kafkaProps: Properties
     lateinit var schemaRepo: SchemaRepository
