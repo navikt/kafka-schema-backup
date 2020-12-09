@@ -1,5 +1,8 @@
 package no.nav.nada
 
+import io.ktor.metrics.micrometer.*
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
