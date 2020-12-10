@@ -1,7 +1,5 @@
 package no.nav.nada
 
-import io.ktor.metrics.micrometer.*
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter
 import kotlinx.coroutines.CoroutineScope
@@ -9,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -21,12 +18,12 @@ import java.util.Properties
 import kotlin.coroutines.CoroutineContext
 
 object SchemaReader : CoroutineScope {
-    val logger = LoggerFactory.getLogger(SchemaReader::class.java)
-    val addedSchemas = Counter.build().name("addedSchema").help("shows the added schemas").create()
-    val deletedSchemas = Counter.build().name("deletedSchema").help("shows the deleted schemas").create()
-    lateinit var job: Job
-    lateinit var kafkaProps: Properties
-    lateinit var schemaRepo: SchemaRepository
+    private val logger = LoggerFactory.getLogger(SchemaReader::class.java)
+    private val addedSchemas = Counter.build().name("addedSchema").help("shows the added schemas").register()
+    private val deletedSchemas = Counter.build().name("deletedSchema").help("shows the deleted schemas").register()
+    private lateinit var job: Job
+    private lateinit var kafkaProps: Properties
+    private lateinit var schemaRepo: SchemaRepository
     val json = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true))
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO + job
