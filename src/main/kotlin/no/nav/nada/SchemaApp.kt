@@ -1,27 +1,20 @@
 package no.nav.nada
 
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.config.ApplicationConfig
-import io.ktor.features.CallLogging
-import io.ktor.features.ContentNegotiation
-import io.ktor.features.DefaultHeaders
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import io.ktor.metrics.micrometer.MicrometerMetrics
-import io.ktor.request.path
-import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.routing
-import io.ktor.serialization.json
+import io.ktor.application.*
+import io.ktor.config.*
+import io.ktor.features.*
+import io.ktor.http.*
+import io.ktor.metrics.micrometer.*
+import io.ktor.request.*
+import io.ktor.response.*
+import io.ktor.routing.*
+import io.ktor.serialization.*
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.prometheus.client.CollectorRegistry
@@ -29,8 +22,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import org.flywaydb.core.Flyway
 import org.slf4j.event.Level
-import java.nio.file.Files
-import java.nio.file.Paths
 import javax.sql.DataSource
 
 fun Application.schemaApi(
