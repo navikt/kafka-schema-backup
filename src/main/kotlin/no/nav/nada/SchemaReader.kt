@@ -12,7 +12,7 @@ import org.apache.kafka.common.errors.RetriableException
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.temporal.ChronoUnit
-import java.util.*
+import java.util.Properties
 import kotlin.coroutines.CoroutineContext
 
 object SchemaReader : CoroutineScope {
@@ -72,7 +72,6 @@ object SchemaReader : CoroutineScope {
                                         logger.info("Message has unknown subject")
                                     }
                                 }
-
                             }
                         consumer.commitSync(Duration.ofSeconds(2))
                     } catch (e: RetriableException) {

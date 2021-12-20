@@ -90,5 +90,4 @@ fun serviceUser(appConfig: ApplicationConfig): ServiceUser {
         username = appConfig.property("serviceuser.username").getString(),
         password = appConfig.property("serviceuser.password").getString()
     )
-
 }
