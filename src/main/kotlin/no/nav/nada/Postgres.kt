@@ -5,6 +5,7 @@ import com.zaxxer.hikari.HikariDataSource
 import io.ktor.config.ApplicationConfig
 import no.nav.vault.jdbc.hikaricp.HikariCPVaultUtil
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.output.MigrateResult
 import javax.sql.DataSource
 
 fun dataSourceFrom(config: DatabaseConfig, role: String = "user"): DataSource {
@@ -41,7 +42,7 @@ data class DatabaseConfig(
         val local: Boolean = false
 )
 
-internal fun migrate(dataSource: HikariDataSource, initSql: String = ""): Int =
+internal fun migrate(dataSource: HikariDataSource, initSql: String = ""): MigrateResult? =
         Flyway.configure().dataSource(dataSource).initSql(initSql).load().migrate()
 
 internal fun clean(dataSource: HikariDataSource) = Flyway.configure().dataSource(dataSource).load().clean()

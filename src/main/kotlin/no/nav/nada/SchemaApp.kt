@@ -1,14 +1,20 @@
 package no.nav.nada
 
-import io.ktor.application.*
-import io.ktor.config.*
-import io.ktor.features.*
-import io.ktor.http.*
-import io.ktor.metrics.micrometer.*
-import io.ktor.request.*
-import io.ktor.response.*
-import io.ktor.routing.*
-import io.ktor.serialization.*
+import io.ktor.application.Application
+import io.ktor.application.call
+import io.ktor.application.install
+import io.ktor.config.ApplicationConfig
+import io.ktor.features.CallLogging
+import io.ktor.features.ContentNegotiation
+import io.ktor.features.DefaultHeaders
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.metrics.micrometer.MicrometerMetrics
+import io.ktor.request.path
+import io.ktor.response.respond
+import io.ktor.routing.get
+import io.ktor.routing.routing
+import io.ktor.serialization.json
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
@@ -19,17 +25,16 @@ import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.prometheus.client.CollectorRegistry
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 import org.flywaydb.core.Flyway
 import org.slf4j.event.Level
 import javax.sql.DataSource
 
 fun Application.schemaApi(
-        appConfig: ApplicationConfig = this.environment.config,
-        dataSource: DataSource = dataSourceFrom(databaseConfigFrom(appConfig)),
-        schemaRepository: SchemaRepository = SchemaRepository(dataSource)
+    appConfig: ApplicationConfig = this.environment.config,
+    dataSource: DataSource = dataSourceFrom(databaseConfigFrom(appConfig)),
+    schemaRepository: SchemaRepository = SchemaRepository(dataSource)
 ) {
-    val jsonConfig = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true))
+    val jsonConfig = Json { isLenient = true }
     val flywayDs = dataSourceFrom(databaseConfigFrom(appConfig), "admin")
     val flyway = Flyway.configure().dataSource(flywayDs).load()
     flyway.migrate()
@@ -46,22 +51,22 @@ fun Application.schemaApi(
     install(DefaultHeaders)
     install(ContentNegotiation) {
         json(
-                json = jsonConfig,
-                contentType = ContentType.Application.Json
+            json = jsonConfig,
+            contentType = ContentType.Application.Json
         )
     }
     install(MicrometerMetrics) {
         registry = PrometheusMeterRegistry(
-                PrometheusConfig.DEFAULT,
-                CollectorRegistry.defaultRegistry,
-                Clock.SYSTEM
+            PrometheusConfig.DEFAULT,
+            CollectorRegistry.defaultRegistry,
+            Clock.SYSTEM
         )
         meterBinders = listOf(
-                ClassLoaderMetrics(),
-                JvmMemoryMetrics(),
-                JvmGcMetrics(),
-                ProcessorMetrics(),
-                JvmThreadMetrics()
+            ClassLoaderMetrics(),
+            JvmMemoryMetrics(),
+            JvmGcMetrics(),
+            ProcessorMetrics(),
+            JvmThreadMetrics()
         )
     }
     routing {
@@ -82,8 +87,8 @@ fun Application.schemaApi(
 
 fun serviceUser(appConfig: ApplicationConfig): ServiceUser {
     return ServiceUser(
-            username = appConfig.property("serviceuser.username").getString(),
-            password = appConfig.property("serviceuser.password").getString()
+        username = appConfig.property("serviceuser.username").getString(),
+        password = appConfig.property("serviceuser.password").getString()
     )
 
 }
