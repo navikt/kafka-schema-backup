@@ -22,4 +22,4 @@ jobs:
       - name: Build with Gradle
         env:
           TESTCONTAINERS_RYUK_DISABLED: true
-        run: ./gradlew clean build
+        run: ./gradlew test build

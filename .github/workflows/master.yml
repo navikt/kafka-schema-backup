@@ -28,7 +28,7 @@ jobs:
       - name: Build with Gradle
         env:
           TESTCONTAINERS_RYUK_DISABLED: true
-        run: ./gradlew clean build
+        run: ./gradlew test build
       - name: Lag tag for image
         run: echo "TAG=$(date +%Y%m%d%H%M%S)-$(git describe --always --dirty --exclude '*')" >> ${GITHUB_ENV}
       - name: Lag full image referanse
