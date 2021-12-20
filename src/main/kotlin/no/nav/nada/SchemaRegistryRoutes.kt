@@ -5,7 +5,9 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.get
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 
 fun Route.schemaRegistry(schemaRepository: SchemaRepository) {
     get("/subjects") {
@@ -18,10 +20,10 @@ fun Route.schemaRegistry(schemaRepository: SchemaRepository) {
             if (versions.isEmpty()) {
                 call.respond(
                     status = HttpStatusCode.NotFound,
-                    message = json {
-                        "error_code" to 40401
-                        "message" to "Subject '$subject' not found"
-                    }
+                    message = buildJsonObject(fun JsonObjectBuilder.() {
+                        put("error_code", JsonPrimitive(40401))
+                        put("message", JsonPrimitive("Subject '$subject' not found"))
+                    })
                 )
             } else {
                 call.respond(versions)
@@ -33,19 +35,19 @@ fun Route.schemaRegistry(schemaRepository: SchemaRepository) {
             call.parameters["version"]?.let { version ->
                 schemaRepository.getSchema(subject, version.toLong())?.let {
                     call.respond(
-                        json {
-                            "subject" to it.subject
-                            "version" to it.version
-                            "id" to it.registry_id
-                            "schema" to it.schema
-                        }
+                        buildJsonObject(fun JsonObjectBuilder.() {
+                            put("subject", JsonPrimitive(it.subject))
+                            put("version", JsonPrimitive(it.version))
+                            put("id", JsonPrimitive(it.registry_id))
+                            put("schema", JsonPrimitive(it.schema))
+                        })
                     )
                 } ?: call.respond(
                     status = HttpStatusCode.NotFound,
-                    message = json {
-                        "error_code" to 40402
-                        "message" to "Version $version not found"
-                    }
+                    message = buildJsonObject(fun JsonObjectBuilder.() {
+                        put("error_code", JsonPrimitive(40402))
+                        put("message", JsonPrimitive("Version $version not found"))
+                    })
                 )
             }
         } ?: call.respond(HttpStatusCode.BadRequest)
@@ -56,10 +58,10 @@ fun Route.schemaRegistry(schemaRepository: SchemaRepository) {
                 call.respond(mapOf("schema" to it))
             } ?: call.respond(
                 status = HttpStatusCode.NotFound,
-                message = json {
-                    "error_code" to 40403
-                    "message" to "Schema $id not found"
-                }
+                message = buildJsonObject(fun JsonObjectBuilder.() {
+                    put("error_code", JsonPrimitive(40403))
+                    put("message", JsonPrimitive("Schema $id not found"))
+                })
             )
         } ?: call.respond(HttpStatusCode.BadRequest)
     }

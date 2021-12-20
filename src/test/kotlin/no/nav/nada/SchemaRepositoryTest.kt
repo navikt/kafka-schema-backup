@@ -25,7 +25,6 @@ class SchemaRepositoryTest {
         }
     }
 
-
     @Test
     fun `should update old version with new version`() {
         withMigratedDb {
@@ -117,7 +116,7 @@ class SchemaRepositoryTest {
             val secondVersion = firstVersion.copy(
                 id = ulid.nextULID(), version = 2,
                 schema =
-                    """{"name": "DiceRoll", "type": "record", "fields": [{"name": "dice", "type": {"type": "array", "items": "int"}}, {"name": "count", "type": "int"}], "namespace": "no.nav.kafkacodelab"}"""
+                """{"name": "DiceRoll", "type": "record", "fields": [{"name": "dice", "type": {"type": "array", "items": "int"}}, {"name": "count", "type": "int"}], "namespace": "no.nav.kafkacodelab"}"""
             )
             repo.save(secondVersion)
             val firstSchema = repo.getSchema("test-topic-value", 1L)!!
@@ -136,7 +135,7 @@ class SchemaRepositoryTest {
             val secondVersion = firstVersion.copy(
                 id = ulid.nextULID(), registry_id = 2, version = 2,
                 schema =
-                    """{"name": "DiceRoll", "type": "record", "fields": [{"name": "dice", "type": {"type": "array", "items": "int"}}, {"name": "count", "type": "int"}], "namespace": "no.nav.kafkacodelab"}"""
+                """{"name": "DiceRoll", "type": "record", "fields": [{"name": "dice", "type": {"type": "array", "items": "int"}}, {"name": "count", "type": "int"}], "namespace": "no.nav.kafkacodelab"}"""
             )
             repo.save(secondVersion)
             assertThat(repo.getSchemaByRegistryId(1)).isEqualTo(firstVersion.schema)
