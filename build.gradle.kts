@@ -1,30 +1,32 @@
 plugins {
     kotlin("jvm") version "1.3.72"
     kotlin("plugin.serialization") version "1.3.72"
+    id("com.dorkbox.GradleUtils") version "2.14"
 }
 
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
+    mavenCentral()
 }
 
-val assertJVersion = "3.16.1"
+val assertJVersion = "3.21.0"
 val coroutinesVersion = "1.3.3"
-val flywayVersion = "6.5.0"
-val hikariVersion = "3.4.2"
-val kafkaVersion = "2.5.0"
-val junitJupiterVersion = "5.6.1"
+val flywayVersion = "6.5.7"
+val hikariVersion = "5.0.0"
+val kafkaVersion = "2.8.1"
+val junitJupiterVersion = "5.8.2"
 val kotliqueryVersion = "1.3.0"
 val ktorVersion = "1.3.2"
-val log4jVersion = "2.13.1"
-val micrometerVersion = "1.5.2"
-val postgresVersion = "42.2.14"
-val postgresTestcontainerVersion = "1.15.0"
-val prometheusVersion = "0.9.0"
+val log4jVersion = "2.17.0"
+val micrometerVersion = "1.8.1"
+val postgresVersion = "42.3.1"
+val postgresTestcontainerVersion = "1.16.2"
+val prometheusVersion = "0.14.1"
 val serializerVersion = "0.20.0"
-val slf4jVersion = "1.7.30"
-val vaultJdbcVersion = "1.3.1"
+val slf4jVersion = "1.7.32"
+val vaultJdbcVersion = "1.3.9"
 
 dependencies {
     implementation(platform(kotlin("bom")))
@@ -52,8 +54,8 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-api:$log4jVersion")
     implementation("org.apache.logging.log4j:log4j-core:$log4jVersion")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion")
-    implementation("com.vlkan.log4j2:log4j2-logstash-layout-fatjar:0.19")
-    implementation("de.huxhorn.sulky:de.huxhorn.sulky.ulid:8.2.0")
+    implementation("com.vlkan.log4j2:log4j2-logstash-layout-fatjar:1.0.5")
+    implementation("de.huxhorn.sulky:de.huxhorn.sulky.ulid:8.3.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
