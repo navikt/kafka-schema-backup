@@ -25,7 +25,7 @@ plugins {
     kotlin("jvm") version "1.6.10"
     kotlin("plugin.serialization") version "1.6.10"
     id("com.dorkbox.GradleUtils") version "2.14"
-    id("org.jmailen.kotlinter") version "3.7.0"
+    id("org.jmailen.kotlinter") version "3.9.0"
     id("com.github.ben-manes.versions") version "0.39.0"
 }
 
