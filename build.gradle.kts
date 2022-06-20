@@ -1,6 +1,6 @@
 val kotlinVersion = "1.6.10"
 val assertJVersion = "3.21.0"
-val coroutinesVersion = "1.5.2"
+val coroutinesVersion = "1.6.3"
 val flywayVersion = "8.2.3"
 val hikariVersion = "5.0.0"
 val kafkaVersion = "3.0.0"
